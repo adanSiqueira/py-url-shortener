@@ -1,0 +1,5 @@
+/venv
+/escope-notes
+/__pycache__
+schema.txt
+*.pyc

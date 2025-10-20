@@ -1,6 +1,5 @@
 # Py URL Shortener
 
-
 ## Project Overview
 
 **Py URL Shortener** is a Python-based backend project that allows users to shorten URLs, track clicks, set expiration dates, and monitor usage statistics. The application demonstrates a professional, layered architecture with scalability, containerization, and real-world backend best practices.
