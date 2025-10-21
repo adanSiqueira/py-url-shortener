@@ -21,7 +21,7 @@ The project uses a **Layered Architecture** with a light microservices approach:
 - **API Layer (FastAPI)**: Exposes endpoints and handles requests and validations.
 - **Service Layer**: Implements business logic such as short_id generation, expiration, and click tracking.
 - **Database Layer (PostgreSQL)**: Stores URLs, clicks, and analytics.
-- **Proxy Layer (Traefik/Nginx)**: Routes requests, manages HTTPS, and load balancing.
+- **Proxy Layer (Traefik)**: Routes requests, manages HTTPS, and load balancing.
 - **Cache Layer (optional - Redis)**: Speeds up access to popular URLs and statistics.
 
 **Advantages:**
@@ -36,7 +36,7 @@ The project uses a **Layered Architecture** with a light microservices approach:
 flowchart TD
     %% User interaction
     A[User] --> B["HTTP/HTTPS → Reverse Proxy 
-    (Nginx)"]
+    (Traefik)"]
     
     %% API Layer
     B --> C["API Layer 
