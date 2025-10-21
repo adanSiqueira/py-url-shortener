@@ -33,7 +33,7 @@ This application is built with **FastAPI**, uses **PostgreSQL** for persistent s
 
 ---
 
-**Core Features:**
+## Core Features:
 - Shorten long URLs and generate a unique short identifier
 - Redirect users to the original URL
 - URL expiration mechanism
