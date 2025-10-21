@@ -1,0 +1,12 @@
+api:
+  dashboard: true
+  insecure: true  # enables access to the dashboard without auth (for local dev only)
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
