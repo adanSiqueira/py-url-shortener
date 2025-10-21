@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime, timedelta
@@ -64,5 +65,4 @@ async def redirect_url(code: str, db: AsyncSession = Depends(get_db)):
     if url.expires_at and datetime.utcnow() > url.expires_at:
         raise HTTPException(status_code=410, detail="URL expired")
 
-    # Aqui futuramente: registrar click async
-    return {"redirect_to": url.original_url}
+    return RedirectResponse(url.original_url)
