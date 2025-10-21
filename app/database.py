@@ -11,13 +11,13 @@ DATABASE_URL = "postgresql+asyncpg://urlshort:urlshortpwd@postgres:5432/urlshort
     - postgres:5432: host and port
     - urlshortdb: database name """
 
-# Creating Asynchronous Engine
+# Asynchronous Engine
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 """ Create an async SQLAlchemy engine:
     - DATABASE_URL: the DB connection string
     - echo=True: logs SQL queries for debugging """
 
-# Creating factory of asynchronous sessions
+# Factory of Asynchronous Sessions
 AsyncSessionLocal = sessionmaker(
     bind=engine,
     class_=AsyncSession,
@@ -28,6 +28,7 @@ AsyncSessionLocal = sessionmaker(
     - class_=AsyncSession: use async sessions
     - expire_on_commit=False: objects remain usable after commit """
 
+# Connects the Sessions with the API Routes
 async def get_db():
     """
     Dependency function to provide a database session to FastAPI routes.
@@ -42,6 +43,8 @@ async def get_db():
         finally:
             await session.close()
 
+# Initializes the DataBase
 async def init_db():
+    """Function that initializes the Database connection"""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
