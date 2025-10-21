@@ -21,34 +21,36 @@ class URLCreate(BaseModel):
     expires_in: int | None = None  # segundos
 
 def generate_code(url: str, size=6):
-    hash_bytes = hashlib.sha256(url.encode()).digest()
+    url_str = str(url)
+    hash_bytes = hashlib.sha256(url_str.encode()).digest()
     chars = string.ascii_letters + string.digits
     code = ''.join(chars[b % len(chars)] for b in hash_bytes[:size])
     return code
 
 @app.post("/api/v1/shorten")
-async def shorten_url(data: URLCreate, db: AsyncSession = Depends(get_db)):
-    # gera código aleatório único
-    code = generate_code(data.url)
-    # while await db.execute(select(URL).where(URL.code == code)).scalar():
-    #     code = generate_code(data.url)
-    while (await db.execute(select(URL).where(URL.code == code))).scalar_one_or_none():
+async def shorten_url(data: URLCreate, db: AsyncSession = Depends(get_db)):        
+    try:
         code = generate_code(data.url)
+        while (await db.execute(select(URL).where(URL.code == code))).scalar_one_or_none():
+            code = generate_code(data.url)
 
-    expires_at = None
-    if data.expires_in:
-        expires_at = datetime.utcnow() + timedelta(seconds=data.expires_in)
+        expires_at = None
+        if data.expires_in:
+            expires_at = datetime.utcnow() + timedelta(seconds=data.expires_in)
 
-    new_url = URL(code=code, original_url=str(data.url), expires_at=expires_at)
-    db.add(new_url)
-    await db.commit()
-    await db.refresh(new_url)
+        new_url = URL(code=code, original_url=str(data.url), expires_at=expires_at)
+        db.add(new_url)
+        await db.commit()
+        await db.refresh(new_url)
 
-    return {
-        "short_url": f"http://localhost/r/{new_url.code}",
-        "code": new_url.code,
-        "expires_at": new_url.expires_at
-    }
+        return {
+            "short_url": f"http://localhost/r/{new_url.code}",
+            "code": new_url.code,
+            "expires_at": new_url.expires_at
+        }
+    except Exception as e:
+        print("ERROR: ", e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/r/{code}")
