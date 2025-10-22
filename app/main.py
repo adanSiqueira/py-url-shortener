@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, APIRouter
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel, HttpUrl
+from typing import List
 import string, hashlib
 from contextlib import asynccontextmanager
 from .database import get_db, init_db, Base
@@ -23,8 +24,9 @@ async def lifespan(app: FastAPI):
     await init_db()
     yield
 
-# App Definition
+# App and Router Definition
 app = FastAPI(title="URL Shortener API", lifespan=lifespan)
+router = APIRouter()
 
 # URL Model
 class URLCreate(BaseModel):
@@ -162,3 +164,76 @@ async def redirect_url(code: str, request: Request, db: AsyncSession = Depends(g
 
     #Redirect to the original URL
     return RedirectResponse(url.original_url)
+
+#Endpoint to get the stats of a link
+@router.get("/api/v1/stats/{code}")
+async def stats(code: str, db: AsyncSession = Depends(get_db)):
+    """
+    Retrieve statistics for a shortened URL.
+
+    Args:
+        code (str): The unique short code of the URL.
+        db (AsyncSession): Async SQLAlchemy session provided via dependency.
+
+    Returns:
+        dict: Contains URL info and click statistics:
+            - code: The short code
+            - original_url: The original URL
+            - created_at: Datetime when URL was created
+            - expires_at: Datetime when URL will expire
+            - total_clicks: Total number of clicks
+            - last_click_at: Datetime of the last click
+            - clicks: List of all click events, each with:
+                - click_id
+                - time (ISO format)
+
+    Raises:
+        HTTPException(404): If URL with given code does not exist
+    """
+    # 1) Get URL by code
+    result = await db.execute(select(URL).where(URL.code == code))
+    url = result.scalar_one_or_none()
+    if not url:
+        raise HTTPException(status_code=404, detail="URL not found")
+
+    # 2) Total clicks
+    total_q = await db.execute(
+        select(func.count(Click.id)).where(Click.url_id == url.id)
+    )
+    total_clicks = total_q.scalar_one() or 0
+
+    # 3) Last click
+    last_q = await db.execute(
+        select(func.max(Click.occurred_at)).where(Click.url_id == url.id)
+    )
+    last_click_at = last_q.scalar_one()
+
+    # 4) All click events (id + occurred_at)
+    clicks_q = await db.execute(
+        select(Click.id, Click.occurred_at)
+        .where(Click.url_id == url.id)
+        .order_by(Click.occurred_at.asc())
+    )
+
+    clicks_rows = clicks_q.all()
+
+    clicks = [
+        {
+            "click_id": c.id,
+            "time": c.occurred_at.isoformat() if c.occurred_at else None
+        }
+        for c in clicks_rows
+    ]
+
+    # 5) Response
+    return {
+        "code": url.code,
+        "original_url": url.original_url,
+        "created_at": url.created_at.isoformat() if url.created_at else None,
+        "expires_at": url.expires_at.isoformat() if url.expires_at else None,
+        "total_clicks": total_clicks,
+        "last_click_at": last_click_at.isoformat() if last_click_at else None,
+        "clicks": clicks
+    }
+
+app.include_router(router)
