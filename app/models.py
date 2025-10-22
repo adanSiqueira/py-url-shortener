@@ -38,7 +38,7 @@ class Click(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     url_id = Column(Integer, ForeignKey("urls.id", ondelete="CASCADE"))
-    occurred_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    occurred_at = Column(DateTime(timezone=True), default=datetime.now)
     ip = Column(String(64), nullable=True)
     user_agent = Column(String(256), nullable=True)
     referer = Column(String(256), nullable=True)

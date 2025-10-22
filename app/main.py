@@ -1,13 +1,13 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel, HttpUrl
 import string, hashlib
 from contextlib import asynccontextmanager
 from .database import get_db, init_db, Base
-from .models import URL
+from .models import URL,Click
 
 #Context Manager
 @asynccontextmanager
@@ -36,7 +36,7 @@ class URLCreate(BaseModel):
     - expires_in: Optional expiration time in seconds
     """
     url: HttpUrl
-    expires_in: int | None = None  # segundos
+    expires_in: int | None = None #Minutes
 
 # Random Code Generator
 def generate_code(url: str, size=6):
@@ -92,9 +92,11 @@ async def shorten_url(data: URLCreate, db: AsyncSession = Depends(get_db)):
         while (await db.execute(select(URL).where(URL.code == code))).scalar_one_or_none():
             code = generate_code(data.url)
 
-        expires_at = None
+        created_at = datetime.now()
+
+        expires_at = datetime.now() + timedelta(days=1)
         if data.expires_in:
-            expires_at = datetime.utcnow() + timedelta(seconds=data.expires_in)
+            expires_at = datetime.now() + timedelta(minutes = data.expires_in)
 
         new_url = URL(code=code, original_url=str(data.url), expires_at=expires_at)
         db.add(new_url)
@@ -104,15 +106,17 @@ async def shorten_url(data: URLCreate, db: AsyncSession = Depends(get_db)):
         return {
             "short_url": f"http://localhost/r/{new_url.code}",
             "code": new_url.code,
+            "created_at": created_at,
             "expires_at": new_url.expires_at
         }
+    
     except Exception as e:
         print("ERROR: ", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 # Endpoint to make the encurted URL redirect to the original URL
 @app.get("/r/{code}")
-async def redirect_url(code: str, db: AsyncSession = Depends(get_db)):
+async def redirect_url(code: str, request: Request, db: AsyncSession = Depends(get_db)):
     """
     Redirect to the original URL.
 
@@ -133,14 +137,28 @@ async def redirect_url(code: str, db: AsyncSession = Depends(get_db)):
         HTTPException(404) if URL not found
         HTTPException(410) if URL has expired
     """
-    result = await db.execute(select(URL).where(URL.code == code))
-    url = result.scalar_one_or_none()
+    try:
+        result = await db.execute(select(URL).where(URL.code == code))
+        url = result.scalar_one_or_none()
 
-    if not url:
-        raise HTTPException(status_code=404, detail="URL not found")
+        if not url:
+            raise HTTPException(status_code=404, detail="URL not found")
 
-    if url.expires_at and datetime.utcnow() > url.expires_at:
-        raise HTTPException(status_code=410, detail="URL expired")
+        if url.expires_at and datetime.now(timezone.utc) > url.expires_at:
+            raise HTTPException(status_code=410, detail="URL expired")
+        
+        new_click = Click(
+                url_id=url.id,
+                ip=request.client.host,
+                user_agent=request.headers.get("user-agent"),
+                referer=request.headers.get("referer")
+            )
+        
+        db.add(new_click)
+        await db.commit()
+    except Exception as e:
+        print("ERROR IN REDIRECTIG URL: ", e)
+        raise HTTPException(status_code=500, detail = str(e))
 
     #Redirect to the original URL
     return RedirectResponse(url.original_url)
