@@ -128,6 +128,29 @@ flowchart TD
 Redirects to the original URL.
 In this case: https://google.com
 ```
+
+#### 3. Retrieve URL Statistics
+
+**Path**: **/api/v1/stats/{code}**<br>
+**Method**: GET<br>
+**Description**: Returns detailed statistics about a shortened URL, including total clicks, last access time, and a list of all recorded click events (click ID and timestamp).<br>
+**Response - example**:
+```
+{
+  "code": "HrTBms",
+  "original_url": "https://google.com/",
+  "created_at": "2025-10-21T14:00:00.000Z",
+  "expires_at": "2025-10-22T14:00:00.000Z",
+  "total_clicks": 3,
+  "last_click_at": "2025-10-23T10:00:00.000Z",
+  "clicks": [
+    {"click_id": 1, "time": "2025-10-22T10:00:00.000Z"},
+    {"click_id": 2, "time": "2025-10-22T11:00:00.000Z"},
+    {"click_id": 3, "time": "2025-10-23T10:00:00.000Z"}
+  ]
+}
+
+```
 ---
 
 ## Performance & Features
@@ -146,7 +169,7 @@ In this case: https://google.com
 
 ##  Working on improvements:
 
-- Implement click analytics & caching with Redis.
+- Implement caching with Redis.
 
 - Add user authentication for custom URL management.
 
