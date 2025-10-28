@@ -24,6 +24,7 @@
 </div>
 <br>
 
+**Access the API documentation:** https://adansiqueira.github.io/py-url-shortener/
 
 ## Project Overview
 
@@ -68,35 +69,10 @@ All components are containerized using **Docker**, orchestrated with **Docker Co
 ---
 
 ## Architecture Diagram
-```mermaid
-flowchart TD
-    %% User interaction
-    A[User] --> B["HTTP/HTTPS → Reverse Proxy 
-    (Traefik)"]
-    
-    %% API Layer
-    B --> C["API Layer 
-    (FastAPI + Uvicorn)"]
-    
-    %% Service and Cache Layers
-    C --> D["Service Layer 
-    (Business Logic: short_id, expiration, tracking)"]
-    C --> E["Cache Layer 
-    (Redis)"]
-    
-    %% Database Layer
-    D --> F["Database Layer (PostgreSQL: URLs, clicks, statistics)"]
-    E --> F
-    
-    %% Styles
-    style A fill:#993399,stroke:#333,stroke-width:2px,color:#fff
-    style B fill:#3366cc,stroke:#333,stroke-width:2px,color:#fff
-    style C fill:#3366cc,stroke:#333,stroke-width:2px,color:#fff
-    style D fill:#339933,stroke:#333,stroke-width:2px,color:#fff
-    style E fill:#ff9900,stroke:#333,stroke-width:2px,color:#000
-    style F fill:#666666,stroke:#333,stroke-width:2px,color:#fff
+<div align="center">
+    <img src="docs/assets/py-url-shortener.drawio.png" alt="py-url-shortener" width="900" style="margin-bottom: 1.0em;"/>
+</div>
 
-```
 ---
 
 ## API Endpoints

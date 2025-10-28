@@ -3,3 +3,6 @@
 /__pycache__
 schema.txt
 *.pyc
+/docs/*.md
+/site
+mkdocs.yml
