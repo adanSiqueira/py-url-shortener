@@ -100,9 +100,9 @@ flowchart TD
 ---
 
 ## API Endpoints
-#### 1. Shorten URL
+### 1. Shorten URL
 
-**Path**: **/api/v1/shorten**
+**Path**: /api/v1/shorten
 **Method**: POST
 **Request Body - example**:
 ```
@@ -120,9 +120,9 @@ flowchart TD
 }
 ```
 
-#### 2. Redirect to Original URL
+### 2. Redirect to Original URL
 
-**Path**: **/r/{code}**
+**Path**: /r/{code}
 **Method**: GET
 **Request - example**:
 ```
@@ -133,6 +133,82 @@ flowchart TD
 Redirects to the original URL.
 In this case: https://google.com
 ```
+
+
+### 3. Retrieve Link Statistics  
+
+**Path**: /api/v1/stats/{code}  
+**Method**: GET  
+
+#### **Purpose**
+
+This endpoint provides **detailed statistics** for a shortened URL.  
+It allows you to monitor link performance and user engagement by retrieving:  
+- Total number of clicks  
+- Creation and expiration timestamps  
+- The time of the most recent access  
+- A list of all individual click events with their timestamps  
+
+This feature is foundational for building an **analytics dashboard** — enabling insight into traffic behavior, popular links, and user interaction over time.
+
+
+#### **How It Works**
+
+When a user accesses a shortened URL (via `/r/{code}`), each visit is logged in the database with:
+- The `URL ID` (from the main URL table)
+- The `Click ID`
+- The `occurred_at` timestamp
+- The `IP`, `Referer`, and `User-Agent`  
+
+The `/api/v1/stats/{code}` endpoint then:
+1. Looks up the original URL using its **unique code**.  
+2. Counts total clicks (`func.count(Click.id)`).  
+3. Finds the last click timestamp (`func.max(Click.occurred_at)`).  
+4. Lists every click event (click ID + time).  
+5. Returns a structured JSON object with these statistics.
+
+
+#### **Response Example**
+
+**Request:**
+```GET /api/v1/stats/HrTBms```
+
+**Response:**
+```json
+{
+  "code": "HrTBms",
+  "original_url": "https://google.com/",
+  "created_at": "2025-10-21T15:26:30.000Z",
+  "expires_at": "2025-10-22T15:26:30.000Z",
+  "total_clicks": 3,
+  "last_click_at": "2025-10-23T10:00:00.000Z",
+  "clicks": [
+    { "click_id": 1, "time": "2025-10-22T10:00:00.000Z" },
+    { "click_id": 2, "time": "2025-10-22T11:00:00.000Z" },
+    { "click_id": 3, "time": "2025-10-23T10:00:00.000Z" }
+  ]
+}
+```
+
+**Implementation Highlights** 
+
+- Aggregates statistics using func.count() and func.max() for performance.
+
+- Returns ISO 8601 timestamps for consistency and API interoperability.
+
+- Designed to integrate seamlessly with upcoming front-end dashboards or analytics modules.
+
+- Handles missing codes gracefully with a clear 404 error response:
+
+**Use Cases**
+
+- Powering analytics dashboards for tracking link performance.
+
+- Logging or monitoring system for marketing campaigns.
+
+- Auditing and validating system activity across shortened URLs.
+
+- Future foundation for per-user stats and visualization dashboards.
 ---
 
 ## Performance & Features
@@ -151,11 +227,10 @@ In this case: https://google.com
 
 ##  Working on improvements:
 
-- Implement click analytics & caching with Redis.
+- Implement caching and rate limit with Redis.
 
 - Add user authentication for custom URL management.
 
-- Implement rate limiting using Redis.
 
 - Deploy on cloud (AWS / GCP / Azure) with HTTPS support.
 
