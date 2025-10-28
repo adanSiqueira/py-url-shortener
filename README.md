@@ -1,5 +1,8 @@
-<div style="text-align: center;">
-    <h1 style="margin-bottom: 0.05em;">Py URL Shortener</h1><a href="https://www.python.org/" target="_blank">
+<div align="center">
+    <img src="docs/assets/logo.png" alt="py-url-shortener" width="350" style="margin-bottom: 1.0em;"/>
+</div>
+<div align="center">
+    <a href="https://www.python.org/" target="_blank">
         <img src="https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white" alt="Python">
     </a>
     <a href="https://fastapi.tiangolo.com/" target="_blank">
@@ -17,8 +20,10 @@
     <a href="https://traefik.io/" target="_blank">
         <img src="https://img.shields.io/badge/Traefik-v3.1-blue?logo=traefik&logoColor=white" alt="Traefik">
     </a>
+    </h1>
 </div>
 <br>
+
 
 ## Project Overview
 
