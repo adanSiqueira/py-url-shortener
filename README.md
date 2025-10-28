@@ -102,37 +102,85 @@ flowchart TD
 ## API Endpoints
 ### 1. Shorten URL
 
-**Path**: /api/v1/shorten
-**Method**: POST
-**Request Body - example**:
-```
+**Path**: `/api/v1/shorten`  
+**Method**: `POST`  
+
+**Purpose:**  
+The **Shorten URL** endpoint allows users to convert long, unwieldy URLs into compact, shareable short codes. This is the core functionality of the URL shortener API, enabling easier sharing and tracking.
+
+**How It Works:**  
+1. Receives a JSON payload containing the original URL and optional expiration time.  
+2. Generates a unique 6-character code using SHA-256 hashing and Base62 encoding.  
+3. Checks the database to avoid code collisions.  
+4. Stores the original URL along with the short code and expiration timestamp in the database.  
+5. Returns a JSON object containing the short URL, code, and expiration datetime.  
+
+**Implementation Highlights:**  
+- Uses **FastAPI** for asynchronous handling of requests.  
+- **SQLAlchemy AsyncSession** ensures non-blocking database operations.  
+- **Pydantic** validates URL input and expiration parameters.  
+- Code generation is deterministic and collision-resistant.  
+- Optional expiration is handled by computing a future `expires_at` timestamp.  
+
+**Request Body - example:**
+```json
 {
   "url": "https://google.com/",
   "expires_in": 3600
 }
 ```
+
 **Response - example**:
-```
+```json
 {
   "short_url": "http://localhost/r/HrTBms",
   "code": "HrTBms",
-  "expires_at": "2025-10-21T16:26:30.000Z"
+  "created_at": "2025-10-21T16:20:00.000Z",
+  "expires_at": "2025-10-21T17:20:00.000Z"
 }
 ```
 
-### 2. Redirect to Original URL
+**Use Cases**:
 
-**Path**: /r/{code}
-**Method**: GET
-**Request - example**:
-```
-/r/HrTBms
-```
-**Response - example**:
-```
-Redirects to the original URL.
-In this case: https://google.com
-```
+- Shortening URLs for social media posts, emails, or QR codes.
+
+- Tracking clicks for marketing campaigns.
+
+- Limiting link lifetime using the expires_in parameter.
+
+### Redirect to Original URL
+
+**Path**: `/r/{code}`  
+**Method**: `GET`  
+
+**Purpose:**  
+The **Redirect** endpoint takes a short code and forwards users to the corresponding original URL. It also logs metadata for each access, enabling click tracking and analytics.
+
+**How It Works:**  
+1. Receives a short code in the path.  
+2. Queries the database for the corresponding URL record.  
+3. Checks if the URL exists and if it has expired.  
+4. If valid, creates a **click record** containing IP address, user agent, referer, and timestamp.  
+5. Redirects the client to the original URL using an HTTP redirect (302/307).  
+
+**Implementation Highlights:**  
+- Uses **FastAPI’s RedirectResponse** to handle HTTP redirection.  
+- Clicks are logged asynchronously with **SQLAlchemy AsyncSession** for non-blocking performance.  
+- Expiration check prevents redirection if the URL has expired (returns HTTP 410).  
+- Supports logging user metrics for analytics dashboards (IP, user agent, referer).  
+
+**Request - example:**
+```/r/HrTBms```
+
+
+**Response - example:**
+Redirects to the original URL (in this case: https://google.com).
+
+
+**Use Cases:**  
+- Sharing shortened URLs while logging click data.  
+- Expiring links for limited-time offers or events.  
+- Collecting analytics on user engagement (IP, device, referer).  
 
 
 ### 3. Retrieve Link Statistics  
