@@ -70,7 +70,7 @@ All components are containerized using **Docker**, orchestrated with **Docker Co
 
 ## Architecture Diagram
 <div align="center">
-    <img src="docs/assets/py-url-shortener.drawio.png" alt="py-url-shortener" width="900" style="margin-bottom: 1.0em;"/>
+    <img src="docs/assets/architecture.png" alt="py-url-shortener" width="900" style="margin-bottom: 1.0em;"/>
 </div>
 
 ---
