@@ -6,3 +6,5 @@ schema.txt
 /docs/*.md
 /site
 mkdocs.yml
+Older-vs-Newer-approach.md
+Create-new-branch.md
